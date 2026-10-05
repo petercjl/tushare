@@ -1,0 +1,8 @@
+# Backtest and catalog contract
+Select → snapshot → run → verify → review. Discover research strategies/versions/runs and supported backtest runners. New outputs must not exist. `backtest s02` and `run` register running, snapshot source and engine, then import checksum-verified files as completed, warning or failed. Failed indexing preserves reports for `research import --out DIR`; do not rerun only to repair an index. External interruption may leave running; inspect the recorded process before retrying.
+
+Use backtest inspect and research show to verify run identity, code, actual dates/capital, metrics, errors, validity and attachments. Finished status and valid performance are separate. Manual reports need a verified importer. Existing JoinQuant import/compare-s02 supports the established S02 export contract, not arbitrary platform exports.
+
+External storage: strategies for maintained code; state/research.sqlite3 index; state/code and engine immutable snapshots; reports original logs/Excel/equity/metrics/HTML/checksums; data large caches and provenance. research backup creates a new consistent SQLite backup, full recovery also requires file folders. Web dashboard is loopback/read-only, managed by dashboard start/status/stop. Report the actual returned URL, never assume availability.
+
+Commands: research register/strategies/versions/runs/show/scan/import/comparisons/backup/doctor. Probe records remain probe, catalog registration does not implement a runner. Return to data validation on coverage errors, select/write on source gaps, verification after repair. Source: U accepted lifecycle, E hash/idempotence and SQLite behavior.

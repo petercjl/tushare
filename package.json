@@ -1,0 +1,37 @@
+{
+  "name": "@petercjl/tushare",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local strategy research, shared PTrade source and backtest catalog",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "tushare-env": "bin/cli.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "runtime",
+    "skills",
+    "capabilities.json",
+    "examples",
+    "README.npm.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test tests-node/*.test.mjs",
+    "check": "node --check bin/cli.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/petercjl/tushare.git"
+  },
+  "quant": {
+    "kind": "tushare"
+  }
+}

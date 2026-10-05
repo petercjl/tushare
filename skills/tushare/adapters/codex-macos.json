@@ -1,0 +1,30 @@
+{
+  "schema": "portable-skill-adapter",
+  "schema_version": "1.0.0",
+  "platform": "codex-macos",
+  "mappings": [
+    {
+      "capability_id": "tushare.research",
+      "status": "implemented",
+      "features": [
+        "source-authoring",
+        "data-validation",
+        "backtest-run",
+        "result-evidence",
+        "iteration"
+      ],
+      "implementation": {
+        "kind": "cli",
+        "command": "tushare-env",
+        "discovery": [
+          "version",
+          "capabilities --json",
+          "doctor --json",
+          "skill source"
+        ],
+        "normalization": "Preserve JSON status, source/run IDs, artifacts and errors; the Agent performs authorship and interpretation with host file/terminal capabilities."
+      },
+      "notes": "macOS CLI mechanics verified separately; fresh-session Agent discovery remains untested. Supply SealSeek target directory explicitly."
+    }
+  ]
+}

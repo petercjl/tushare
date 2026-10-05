@@ -1,0 +1,72 @@
+name: Publish npm package
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: patch, minor, major, prerelease, or exact semver
+        required: true
+        default: patch
+        type: string
+      tag:
+        description: npm dist-tag
+        required: true
+        default: latest
+        type: choice
+        options: [latest, next]
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: npm-release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  qa:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: python -m pip install ./runtime
+      - run: python -m unittest discover -s tests-python
+        env:
+          PYTHONPATH: runtime/src
+  publish:
+    needs: qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.15.0'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Upgrade npm for OIDC
+        run: npm install --global npm@latest
+      - run: npm ci
+      - run: npm run check --if-present
+      - run: npm test --if-present
+      - name: Configure release author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Publish @petercjl/tushare
+        run: npx --yes --package @petercjl/npm-release-kit@0.1.4 npm-release-kit ci publish --release "${{ inputs.release }}" --tag "${{ inputs.tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
