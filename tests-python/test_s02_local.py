@@ -1,9 +1,11 @@
 import unittest
+import tempfile
+from pathlib import Path
 from types import SimpleNamespace as NS
 from decimal import Decimal
 import pandas as pd
 from qt_research.nav_availability import apply_evidence, load_evidence
-from qt_research.s02_local import S02Runtime, ROOT
+from qt_research.s02_local import S02Runtime
 from qt_research.ledger import AccountLedger
 from qt_research.ledger import Position
 
@@ -15,7 +17,23 @@ class S02AdapterTests(unittest.TestCase):
         daily=pd.DataFrame({'close':[100.,110.,9999.],'volume':[1000.,2000.,999999.],'factor':[1.,1.1,20.]},index=dates)
         minutes=pd.DataFrame({'close':[110.,9999.],'vol':[100.,999999.]},index=pd.to_datetime(['2024-01-08 14:00','2024-01-08 14:01']))
         data=NS(start=pd.Timestamp('2024-01-08'),calendar=pd.DatetimeIndex(dates),daily={symbol:daily},sessions={symbol:{dates[1]:minutes}},nav=pd.DataFrame(),dividends=[])
-        r=S02Runtime(data,ROOT/'strategies/S02-local-v1/strategy.py',100000)
+        temp=tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        source=Path(temp.name)/'adapter_fixture.py'
+        source.write_text('def initialize(context):\n    pass\n', encoding='utf-8')
+        r=S02Runtime(data,source,100000)
+        # External strategy callback is mocked; this suite verifies adapter timing/evidence.
+        def parse_nav_fixture(frame,security,start,end,asof):
+            result={}
+            for date in pd.date_range(start,end):
+                key=date.strftime('%Y-%m-%d');rows=frame.loc[frame.nav_date==date.strftime('%Y%m%d')]
+                record={'status':'missing'}
+                if len(rows):
+                    row=rows.iloc[0];ann=pd.Timestamp(row.ann_date);available=ann+pd.Timedelta(days=1)
+                    record.update(unit_nav=float(row.unit_nav),announcement_date=str(ann.date()),available_at=str(available),status='ok' if available<=pd.Timestamp(asof) else 'missing')
+                result[key]=record
+            return result
+        r.s.parse_nav_window=parse_nav_fixture
         r.time=pd.Timestamp('2024-01-08 14:00');r.sync()
         return r
 
